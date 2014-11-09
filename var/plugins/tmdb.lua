@@ -35,6 +35,7 @@ function init()
 	language = "";
 	apiKey = "";
 	mode_parameter = "false";
+	search_string = "";
 	n = neutrino();
 end
 
@@ -45,6 +46,7 @@ function readConfs()
 	apiKey = "311e70fd5d86a21b7ec0756a6067ac4d";
 end
 
+-- Main Menu
 function showMainMenu()
 	mainMenu = menu.new{name="TMDB Plugin", icon=pluginIcon};
 	mainMenu:addItem{type="forwarder", name="Aktueller Sender", action="getEPG", icon=1, directkey=RC["1"]};
@@ -52,11 +54,27 @@ function showMainMenu()
 	mainMenu:addItem{type="forwarder", name="Suche", action="searchMovie", icon=3, directkey=RC["3"]};
 	mainMenu:addItem{type="separatorline"};
 	mainMenu:addItem{type="forwarder", name="Einstellungen", action="setOptions", id="-2", icon="blau", directkey=RC["blue"]};
-	mainMenu:exec()
+	mainMenu:exec();
 end
 
+-- Search Menu for Movie
 function searchMovie()
-debug("Marci");
+	hideMenu(mainMenu);
+	searchMenu = menu.new{name="Film suchen", icon=pluginIcon};
+	searchMenu:addItem{type="stringinput", action="setSearchString", value=search_string, sms=1, name="Filmtitel"};
+	searchMenu:addItem{type="forwarder", name="Suchen", action="search", icon="blau", directkey=RC["blue"]};
+	searchMenu:exec();
+end
+
+-- Set title to search
+function setSearchString(_index, _value)
+	search_string = string.gsub(_value," ","%%20");
+end
+
+-- Search Movie
+function search()
+	hideMenu(searchMenu);
+	genLink(search_string);
 end
 
 --Link zur Suche des Titels erstellen
@@ -164,6 +182,11 @@ end
 -- Set mediaType to movie or serie
 function setType(_type)
 	mediaType = _type;
+end
+
+-- Hide Menu
+function hideMenu(menu)
+	if menu ~= nil then menu:hide() end
 end
 
 -- Debug Function 
