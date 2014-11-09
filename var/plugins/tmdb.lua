@@ -45,6 +45,20 @@ function readConfs()
 	apiKey = "311e70fd5d86a21b7ec0756a6067ac4d";
 end
 
+function showMainMenu()
+	mainMenu = menu.new{name="TMDB Plugin", icon=pluginIcon};
+	mainMenu:addItem{type="forwarder", name="Aktueller Sender", action="getEPG", icon=1, directkey=RC["1"]};
+	mainMenu:addItem{type="forwarder", name="Von Festplatte", action="loadMovies", icon=2, directkey=RC["2"]};
+	mainMenu:addItem{type="forwarder", name="Suche", action="searchMovie", icon=3, directkey=RC["3"]};
+	mainMenu:addItem{type="separatorline"};
+	mainMenu:addItem{type="forwarder", name="Einstellungen", action="setOptions", id="-2", icon="blau", directkey=RC["blue"]};
+	mainMenu:exec()
+end
+
+function searchMovie()
+debug("Marci");
+end
+
 --Link zur Suche des Titels erstellen
 function genLink(_title)
 	_title = _title:gsub("%s","%%20");
@@ -172,8 +186,8 @@ end
 if mode_parameter == "true" then
 	genLink(arg[3]);
 else
-	--showMainMenu();
-	genLink("prakti.com")
+	showMainMenu();
+	--genLink("prakti.com")
 end
 
 os.execute("rm -rf " .. tmpPath);
