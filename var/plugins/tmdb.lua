@@ -1,3 +1,5 @@
+--TMDB Mod from TangoCash
+--based on
 --TMDB LUA Plugin
 --From Ezak for coolstream.to
 --READ LICENSE on https://github.com/Ezak91/CST-TMDB-Plugin.git
@@ -5,20 +7,21 @@
 
 -- Aktuelle ChannelID für EPG Funktion ermitteln
 function GetchannelID()
-    local fname = "../tmp/tmdb_channelid.txt"
+    local fname = "/tmp/tmdb_channelid.txt"
     os.execute("wget -q -O " .. fname .. " http://127.0.0.1/control/zapto" )
 	local fp = io.open(fname, "r")
 	if fp == nil then
 		print("Error opening file '" .. fname .. "'.")
 	end
-	channelID = fp:read()
-    fp:close()
+	local channelid = fp:read();
+	fp:close()
+	return channelid;
 end
 
 --EPG zur aktuellen ChannelID ermitteln, parsen und pro Eintrag ein Menüitem erstellen
 function GetEPG()
-	local fname = "../tmp/tmdb_epg.txt"
-    os.execute("wget -q -O " .. fname .. " 'http://127.0.0.1/control/epg?xml=true&channelid=" .. channelID .. "'" )
+	local fname = "/tmp/tmdb_epg.txt"
+	os.execute("wget -q -O " .. fname .. " 'http://127.0.0.1/control/epg?xml=true&channelid=" .. GetchannelID() .. "'" )
 	local fp = io.open(fname, "r")
 	if fp == nil then
 		print("Error opening file '" .. fname .. "'.")
@@ -53,15 +56,19 @@ end
 
 --Link zur Suche des Titels erstellen
 function GenLink(_search)
+local h = hintbox.new{ title="Info", text="Infos werden gesucht...", icon="info"};
+h:exec();
 lastSearch = _search
 _search = _search:gsub("%s","%%20")
+_search = _search:gsub("(')","%%27")
 link = "http://api.themoviedb.org/3/search/" .. option .. "?api_key=311e70fd5d86a21b7ec0756a6067ac4d&language=de&query=" .. _search
+h:hide();
 Getquellcode( link)
 end
 
 --Quellcode einer Seite herunterladen zum Beispiel neue Kinofilme, oder Informationen zu einem gesuchten Film
 function Getquellcode( _link)	
-	local fname = "../tmp/tmdb_movies.txt"
+	local fname = "/tmp/tmdb_movies.txt"
 	os.execute("wget -q -O " .. fname .. " '" .. _link  .. "'")
 	ParseMovies()
 end
@@ -70,7 +77,7 @@ end
 function ParseMovies()
     results = 0
 	movies = {}
-	local fname = "../tmp/tmdb_movies.txt"
+	local fname = "/tmp/tmdb_movies.txt"
 	local fp = io.open(fname, "r")
 	if fp == nil then
 		print("Error opening file '" .. fname .. "'.")
@@ -154,7 +161,7 @@ function GetMovieDetails()
 			movieinfos.genres = movieinfos.genres .. " " .. genre
 		end
 	
-		inhalt = "Titel: " .. movieinfos.titel  .. "\n" .. "Original Titel: " .. movieinfos.originaltitel .. "\n" .. "Dauer: " .. movieinfos.runtime .. " min" .. "\n" .. "Releasedate: " .. movieinfos.releasedate ..  "\n" .. "Genres: " .. movieinfos.genres .. "\n" .. "Adult: " .. movieinfos.adult .. "\n" .. "Bewertung: " .. movieinfos.vote  .. " / 10 (" .. movieinfos.votecount .. " Stimmen)" .. "\n" .. "\n" .. "TMDB Plugin by Ezak for www.coolstream.to";
+		inhalt = "Titel: " .. movieinfos.titel  .. "\n" .. "Original Titel: " .. movieinfos.originaltitel .. "\n" .. "Dauer: " .. movieinfos.runtime .. " min" .. "\n" .. "Releasedate: " .. movieinfos.releasedate ..  "\n" .. "Genres: " .. movieinfos.genres .. "\n" .. "Adult: " .. movieinfos.adult .. "\n" .. "Bewertung: " .. movieinfos.vote  .. " / 10 (" .. movieinfos.votecount .. " Stimmen)";
 		getPicture()
 		ShowInfo()
 	end	
@@ -174,7 +181,7 @@ function GetTVDetails()
 	movieinfos.seasons = ""
 	movieinfos.genres = " "
 
-	local fname = "../tmp/tmdb_moviedetails.txt"
+	local fname = "/tmp/tmdb_moviedetails.txt"
 	os.execute("wget -q -O " .. fname .. " '" .. "http://api.themoviedb.org/3/tv/" .. movies[movienumber].id .. "?api_key=311e70fd5d86a21b7ec0756a6067ac4d&language=de" .. "'")
 	
 	local fp = io.open(fname, "r")
@@ -200,7 +207,7 @@ function GetTVDetails()
 			movieinfos.genres = movieinfos.genres .. " " .. genre
 		end
 	
-		inhalt = "Titel: " .. movieinfos.titel  .. "\n" .. "Original Titel: " .. movieinfos.originaltitel .. "\n" .. "Erstausstrahlung: " .. movieinfos.releasedate .. "\n" .. "Staffeln: " .. movieinfos.seasons ..  "\n" .. "Episoden: " .. movieinfos.episodes .. "\n" .. "Genres: " .. movieinfos.genres ..  "\n" .. "Bewertung: " .. movieinfos.vote  .. " / 10 (" .. movieinfos.votecount .. " Stimmen)" .. "\n" .. "\n" .. "TMDB Plugin by Ezak for www.coolstream.to";
+		inhalt = "Titel: " .. movieinfos.titel  .. "\n" .. "Original Titel: " .. movieinfos.originaltitel .. "\n" .. "Erstausstrahlung: " .. movieinfos.releasedate .. "\n" .. "Staffeln: " .. movieinfos.seasons ..  "\n" .. "Episoden: " .. movieinfos.episodes .. "\n" .. "Genres: " .. movieinfos.genres ..  "\n" .. "Bewertung: " .. movieinfos.vote  .. " / 10 (" .. movieinfos.votecount .. " Stimmen)";
 		getPicture()
 		ShowInfo()
     end		
@@ -210,24 +217,28 @@ end
 --Cover herunterladen
 function getPicture()
 if movieinfos.cover == nil  then
-    local fname = "../tmp/tmdb_picture.jpg"
+    local fname = "/tmp/tmdb_picture.jpg"
     os.execute("wget -q -U Mozilla -O " .. fname .. " 'http://d3a8mw37cqal2z.cloudfront.net/assets/f996aa2014d2ffd/images/no-poster-w185.jpg'" );
 else
-    local fname = "../tmp/tmdb_picture.jpg"
-    os.execute("wget -q -O " .. fname .. " '" .. "http://image.tmdb.org/t/p/w500" .. movieinfos.cover .. "'" )
+    local fname = "/tmp/tmdb_picture.jpg"
+    os.execute("wget -q -O " .. fname .. " '" .. "http://image.tmdb.org/t/p/w185" .. movieinfos.cover .. "'" )
 end
 end
 
 --Infos im Fenster erzeugen
 function ShowInfo()
 oldOption = option;
-n = neutrino();
 
 local spacer = 8;
-local x  = 150;
-local y  = 70;
-local dx = 1000;
-local dy = 600;
+
+--since the tmdb api deliver the pic in 185x278, we use this
+local pic_width = 185;
+local pic_heigth = 278;
+
+local dx = (SCREEN['END_X']-SCREEN['OFF_X'])/10*8;
+local dy = (SCREEN['END_Y']-SCREEN['OFF_Y'])/10*8;
+local x  = (SCREEN['END_X']-SCREEN['OFF_X'])/2 - dx/2;
+local y  = (SCREEN['END_Y']-SCREEN['OFF_Y'])/2 - dy/2;
 
 if option == 'movie' then
 	btnGreenText = 'Serien';
@@ -236,20 +247,23 @@ else
 end
 utitel = "TMDB Info: " .. movieinfos.titel
  
-w = cwindow.new{x=x, y=y, dx=dx, dy=dy, title=utitel, btnRed="Bild speichern", 
+local w = cwindow.new{x=x, y=y, dx=dx, dy=dy, title=utitel, btnRed="Bild speichern", 
 			btnGreen=btnGreenText};
 w:paint();
 
-ct1 = ctext.new{x=x+220, y=y+50, dx=500, dy=260, text=inhalt,font_text=FONT['MENU']};
+ct1 = ctext.new{x=x+spacer+pic_width+spacer, y=y+spacer+w:header_height(), dx=dx-spacer-pic_width-spacer, dy=pic_heigth+spacer, text=inhalt,font_text=FONT['MENU']};
 ct1:paint();
 
-ct2 = ctext.new{x=160, y=y+330, dx=1000, dy=230, text=movieinfos.overview,mode = "ALIGN_SCROLL"};
+ct2 = ctext.new{x=x+spacer, y=y+spacer+w:header_height()+pic_heigth+spacer, dx=dx-spacer, dy=dy-spacer-w:header_height()-pic_heigth-spacer-w:footer_height()-spacer, text=movieinfos.overview,mode = "ALIGN_SCROLL"};
 ct2:paint();
 
-n:DisplayImage("/tmp/tmdb_picture.jpg", 160, 130, 190, 260)
+n:DisplayImage("/tmp/tmdb_picture.jpg", x+spacer, y+spacer+w:header_height(), pic_width, pic_heigth, 1);
 
-neutrinoExec()
-CloseNeutrino()
+MainLoop();
+
+ct1:hide();
+ct2:hide();
+w:hide();
 
 if oldOption == option then
 	option = 'movie';
@@ -260,7 +274,7 @@ end
 end
 
 --Fenster anzeigen und auf Tasteneingaben reagieren
-function neutrinoExec()
+function MainLoop()
 	repeat
 		msg, data = n:GetInput(500)
 		-- Taste Rot versteckt den Text
@@ -285,18 +299,11 @@ function neutrinoExec()
 	until msg == RC['home'] or msg == RC['setup'];
 end
 
---Fenster schließen
-function CloseNeutrino()
-	ct1:hide();
-	ct2:hide();
-	w:hide();
-end
-
 --[[
 MAIN
 ]]
 option = 'movie';
-GetchannelID();
+n = neutrino();
 GetEPG();
 os.execute("rm /tmp/tmdb_*.*");	
 n = nil
